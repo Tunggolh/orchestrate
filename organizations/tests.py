@@ -13,7 +13,7 @@ from organizations.models import Organization, Membership
 from users.tests import create_user
 
 CREATE_ORGANIZATION_URL = reverse('organizations:create')
-DETAIL_ORGANIZATION_URL = reverse('organizations:detail')
+DETAIL_ORGANIZATION_URL = reverse('organizations:detail', kwargs={'pk': 1})
 LIST_ORGANIZATIONS_URL = reverse('organizations:list')
 ADD_MEMBER_URL = reverse('organizations:add_member')
 REMOVE_MEMBER_URL = reverse('organizations:remove_member')
