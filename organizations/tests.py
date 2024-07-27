@@ -13,6 +13,7 @@ from organizations.models import Organization, Membership
 from users.tests import create_user
 
 CREATE_ORGANIZATION_URL = reverse('organizations:create')
+DETAIL_ORGANIZATION_URL = reverse('organizations:detail')
 LIST_ORGANIZATIONS_URL = reverse('organizations:list')
 ADD_MEMBER_URL = reverse('organizations:add_member')
 REMOVE_MEMBER_URL = reverse('organizations:remove_member')
@@ -113,10 +114,44 @@ class PrivateOrganizationApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
+    def test_retrieve_organization_successful(self):
+        payload = {
+            'name': 'Test Organization',
+            'domain': 'test.com'
+        }
+
+        organization = self.client.post(CREATE_ORGANIZATION_URL, payload)
+
+        organization_detail = self.client.get(
+            DETAIL_ORGANIZATION_URL, {'pk': organization.data['id']})
+
+        self.assertEqual(organization_detail.data['name'], payload['name'])
+        self.assertEqual(organization_detail.status_code, status.HTTP_200_OK)
+
     def test_retrieve_organizations_unauthorized(self):
         res = self.unauthenticated_client.get(LIST_ORGANIZATIONS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_organization_successful(self):
+        payload = {
+            'name': 'Test Organization',
+            'domain': 'test.com'
+        }
+
+        organization = self.client.post(CREATE_ORGANIZATION_URL, payload)
+
+        payload = {
+            'name': 'Updated Test Organization',
+            'domain': 'updated.com'
+        }
+
+        res = self.client.patch(
+            DETAIL_ORGANIZATION_URL, {'pk': organization.data['id']}, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['name'], payload['name'])
+        self.assertEqual(res.data['domain'], payload['domain'])
 
     def test_create_organization_membership_successful(self):
         payload = {

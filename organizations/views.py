@@ -68,7 +68,7 @@ class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(organization)
         return Response(serializer.data)
 
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         organization = self.get_object()
         organization_owner = Membership.objects.get(
             organization=organization, role=Membership.OWNER)
