@@ -3,20 +3,19 @@ Test cases for the organizations app.
 """
 
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from rest_framework.test import APIClient
 from rest_framework import status
 
 from organizations.models import Organization, Membership
+from organizations.serializers import OrganizationSerializer
 from users.tests import create_user
 
-CREATE_ORGANIZATION_URL = reverse('organizations:create')
+LIST_CREATE_ORGANIZATION_URL = reverse('organizations:list_create')
 DETAIL_ORGANIZATION_URL = reverse('organizations:detail', kwargs={'pk': 1})
-LIST_ORGANIZATIONS_URL = reverse('organizations:list')
-ADD_MEMBER_URL = reverse('organizations:add_member')
-REMOVE_MEMBER_URL = reverse('organizations:remove_member')
+ADD_MEMBER_URL = reverse('organizations:add_member', kwargs={'pk': 1})
+REMOVE_MEMBER_URL = reverse('organizations:remove_member', kwargs={'pk': 1})
 
 
 def create_organization(**params):
@@ -57,20 +56,15 @@ class MembershipModelTests(TestCase):
             domain='test.com'
         )
 
-        payload = {
-            'user': self.user.id,
-            'organization': organization.id,
-            'role': Membership.ROLE_OWNER
-        }
+        member = Membership.objects.create(
+            user=self.user,
+            organization=organization,
+            role=Membership.ROLE_OWNER
+        )
 
-        res = self.client.post(CREATE_ORGANIZATION_URL, payload)
-
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        membership = Membership.objects.get(
-            organization=organization, user=self.user)
-        self.assertEqual(membership.user, self.user)
-        self.assertEqual(membership.organization, organization)
-        self.assertEqual(membership.role, Membership.ROLE_OWNER)
+        self.assertEqual(member.user, self.user)
+        self.assertEqual(member.organization, organization)
+        self.assertEqual(member.role, Membership.ROLE_OWNER)
 
 
 class PrivateOrganizationApiTests(TestCase):
@@ -81,7 +75,6 @@ class PrivateOrganizationApiTests(TestCase):
             last_name='Doe',
             password='testpass123'
         )
-        self.superuser = create_user()
         self.client = APIClient()
         self.unauthenticated_client = APIClient()
         self.client.force_authenticate(self.user)
@@ -106,9 +99,10 @@ class PrivateOrganizationApiTests(TestCase):
 
         organizations = [organization1, organization2]
 
-        res = self.client.get(LIST_ORGANIZATIONS_URL)
+        res = self.client.get(LIST_CREATE_ORGANIZATION_URL)
 
-        organizations = Organization.objects.filter(membership__user=self.user)
+        organizations = Organization.objects.filter(
+            memberships__user=self.user)
         serializer = OrganizationSerializer(organizations, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -120,16 +114,15 @@ class PrivateOrganizationApiTests(TestCase):
             'domain': 'test.com'
         }
 
-        organization = self.client.post(CREATE_ORGANIZATION_URL, payload)
+        organization = self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
 
-        organization_detail = self.client.get(
-            DETAIL_ORGANIZATION_URL, {'pk': organization.data['id']})
+        organization_detail = self.client.get(DETAIL_ORGANIZATION_URL)
 
         self.assertEqual(organization_detail.data['name'], payload['name'])
         self.assertEqual(organization_detail.status_code, status.HTTP_200_OK)
 
     def test_retrieve_organizations_unauthorized(self):
-        res = self.unauthenticated_client.get(LIST_ORGANIZATIONS_URL)
+        res = self.unauthenticated_client.get(LIST_CREATE_ORGANIZATION_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -139,7 +132,7 @@ class PrivateOrganizationApiTests(TestCase):
             'domain': 'test.com'
         }
 
-        organization = self.client.post(CREATE_ORGANIZATION_URL, payload)
+        self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
 
         payload = {
             'name': 'Updated Test Organization',
@@ -147,7 +140,7 @@ class PrivateOrganizationApiTests(TestCase):
         }
 
         res = self.client.patch(
-            DETAIL_ORGANIZATION_URL, {'pk': organization.data['id']}, payload)
+            DETAIL_ORGANIZATION_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['name'], payload['name'])
@@ -159,7 +152,7 @@ class PrivateOrganizationApiTests(TestCase):
             'domain': 'test.com'
         }
 
-        res = self.client.post(CREATE_ORGANIZATION_URL, payload)
+        res = self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         organization = Organization.objects.get(**res.data)
@@ -185,13 +178,12 @@ class PrivateOrganizationApiTests(TestCase):
             password='testpass123'
         )
 
-        res = self.client.post(CREATE_ORGANIZATION_URL, payload)
+        res = self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
 
         organization = Organization.objects.get(domain=payload['domain'])
 
         payload = {
             'user': user.id,
-            'organization': organization.id,
             'role': Membership.ROLE_MEMBER
         }
 
@@ -210,17 +202,16 @@ class PrivateOrganizationApiTests(TestCase):
         }
 
         user1 = create_user(
-            email='test2@example.com',
+            email='test1@example.com',
             first_name='John',
             last_name='Doe',
             password='testpass123'
         )
 
-        self.client.post(CREATE_ORGANIZATION_URL, payload)
+        self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
 
         res = self.unauthenticated_client.post(ADD_MEMBER_URL, {
             'user': user1.id,
-            'organization': 1,
             'role': Membership.ROLE_MEMBER
         })
 
@@ -238,11 +229,10 @@ class PrivateOrganizationApiTests(TestCase):
 
         res = new_client.post(ADD_MEMBER_URL, {
             'user': user2.id,
-            'organization': 1,
             'role': Membership.ROLE_OWNER
         })
 
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_remove_member_from_organization_successful(self):
         payload = {
@@ -257,17 +247,17 @@ class PrivateOrganizationApiTests(TestCase):
             password='testpass123'
         )
 
-        self.client.post(CREATE_ORGANIZATION_URL, payload)
+        self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
         self.client.post(ADD_MEMBER_URL, {
             'user': user1.id,
-            'organization': 1,
             'role': Membership.ROLE_MEMBER
         })
 
-        res = self.client.post(REMOVE_MEMBER_URL, {
+        payload = {
             'user': user1.id,
-            'organization': 1
-        })
+        }
+
+        res = self.client.delete(REMOVE_MEMBER_URL, payload)
 
         members = Membership.objects.filter(organization_id=1)
 
@@ -294,15 +284,13 @@ class PrivateOrganizationApiTests(TestCase):
             password='testpass123'
         )
 
-        self.client.post(CREATE_ORGANIZATION_URL, payload)
+        self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
         self.client.post(ADD_MEMBER_URL, {
             'user': user1.id,
-            'organization': 1,
             'role': Membership.ROLE_MEMBER
         })
         self.client.post(ADD_MEMBER_URL, {
             'user': user2.id,
-            'organization': 1,
             'role': Membership.ROLE_MEMBER
         })
 
@@ -316,9 +304,10 @@ class PrivateOrganizationApiTests(TestCase):
         new_client = APIClient()
         new_client.force_authenticate(user1)
 
-        res = new_client.post(REMOVE_MEMBER_URL, {
+        payload = {
             'user': user2.id,
-            'organization': 1
-        })
+        }
 
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        res = new_client.delete(REMOVE_MEMBER_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)

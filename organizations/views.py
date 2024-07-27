@@ -8,13 +8,13 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from organizations.serializers import OrganizationSerializer
+from organizations.serializers import MembershipSerializer, OrganizationSerializer
 from organizations.models import Organization, Membership
 
 
-class OrganizationListView(generics.ListAPIView):
+class OrganizationListView(generics.ListCreateAPIView):
     """
-    List organizations of the authenticated user.
+    List all organizations the user is a member of or create a new organization.
     """
 
     permission_classes = [IsAuthenticated]
@@ -23,22 +23,13 @@ class OrganizationListView(generics.ListAPIView):
     def get_queryset(self):
         return Organization.objects.filter(memberships__user=self.request.user)
 
-
-class OrganizationCreateView(generics.CreateAPIView):
-    """
-    Create a new organization.
-    """
-
-    permission_classes = [IsAuthenticated]
-    serializer_class = OrganizationSerializer
-
     def perform_create(self, serializer):
         organization = serializer.save()
 
         Membership.objects.create(
             organization=organization,
             user=self.request.user,
-            role=Membership.OWNER
+            role=Membership.ROLE_OWNER
         )
 
 
@@ -71,7 +62,7 @@ class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     def patch(self, request, *args, **kwargs):
         organization = self.get_object()
         organization_owner = Membership.objects.get(
-            organization=organization, role=Membership.OWNER)
+            organization=organization, role=Membership.ROLE_OWNER)
 
         if organization_owner.user != request.user:
             return Response(
@@ -79,17 +70,17 @@ class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        return super().put(request, *args, **kwargs)
+        return self.partial_update(request, *args, **kwargs)
 
 
 class AddMemberView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = OrganizationSerializer
+    serializer_class = MembershipSerializer
 
     def create(self, request, *args, **kwargs):
         organization = get_object_or_404(Organization, id=kwargs['pk'])
         organization_owner = Membership.objects.get(
-            organization=organization, role=Membership.OWNER)
+            organization=organization, role=Membership.ROLE_OWNER)
 
         if organization_owner.user != request.user:
             return Response(
@@ -100,7 +91,7 @@ class AddMemberView(generics.CreateAPIView):
         data = {
             'organization': organization.id,
             'user': request.data.get('user'),
-            'role': Membership.MEMBER
+            'role': request.data.get('role', Membership.ROLE_MEMBER)
         }
 
         serializer = self.get_serializer(data=data)
@@ -116,7 +107,7 @@ class RemoveMemberView(generics.DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         organization = get_object_or_404(Organization, id=kwargs['pk'])
         organization_owner = Membership.objects.get(
-            organization=organization, role=Membership.OWNER)
+            organization=organization, role=Membership.ROLE_OWNER)
 
         if organization_owner.user != request.user:
             return Response(
