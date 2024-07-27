@@ -115,8 +115,8 @@ class RemoveMemberView(generics.DestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        membership = Membership.objects.get(
-            user=request.data.get('user'), organization=organization)
+        membership = get_object_or_404(
+            Membership, user=request.data.get('user'), organization=organization)
 
         self.perform_destroy(membership)
 
