@@ -80,3 +80,53 @@ class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             )
 
         return super().put(request, *args, **kwargs)
+
+
+class AddMemberView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrganizationSerializer
+
+    def create(self, request, *args, **kwargs):
+        organization = get_object_or_404(Organization, id=kwargs['pk'])
+        organization_owner = Membership.objects.get(
+            organization=organization, role=Membership.OWNER)
+
+        if organization_owner.user != request.user:
+            return Response(
+                {'error': 'You are not the owner of this organization.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        data = {
+            'organization': organization.id,
+            'user': request.data.get('user'),
+            'role': Membership.MEMBER
+        }
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class RemoveMemberView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        organization = get_object_or_404(Organization, id=kwargs['pk'])
+        organization_owner = Membership.objects.get(
+            organization=organization, role=Membership.OWNER)
+
+        if organization_owner.user != request.user:
+            return Response(
+                {'error': 'You are not the owner of this organization.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        membership = Membership.objects.get(
+            user=request.data.get('user'), organization=organization)
+
+        self.perform_destroy(membership)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
