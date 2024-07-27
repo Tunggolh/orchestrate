@@ -77,7 +77,7 @@ class PublicUserApiTests(TestCase):
 
         res = self.client.post(TOKEN_URL, payload)
 
-        self.assertIn('token', res.data)
+        self.assertIn('access', res.data)
         self.assertIn('refresh', res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
@@ -129,7 +129,8 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res.data, {
             'email': self.user.email,
             'first_name': self.user.first_name,
-            'last_name': self.user.last_name
+            'last_name': self.user.last_name,
+            'id': self.user.id
         })
 
     def test_update_user_profile(self):
