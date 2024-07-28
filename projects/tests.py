@@ -319,12 +319,12 @@ class PrivateProjectApiTests(TestCase):
         project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         project_members = ProjectMembership.objects.filter(
-            id=project.id)
+            id=project.data.get('id'))
 
         self.assertEqual(project_members.count(), 1)
 
         payload = {
-            'project': project.id,
+            'project': project.data.get('id'),
             'user': self.user2.id,
             'role': ProjectMembership.PROJECT_MANAGER
         }
@@ -347,12 +347,12 @@ class PrivateProjectApiTests(TestCase):
         project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         project_members = ProjectMembership.objects.filter(
-            id=project.id)
+            id=project.data.get('id'))
 
         self.assertEqual(project_members.count(), 1)
 
         payload = {
-            'project': project.id,
+            'project': project.data.get('id'),
             'user': self.user2.id,
             'role': ProjectMembership.PROJECT_MANAGER
         }
@@ -371,7 +371,7 @@ class PrivateProjectApiTests(TestCase):
         project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         payload = {
-            'project': project.id,
+            'project': project.data.get('id'),
             'user': self.user2.id,
             'role': ProjectMembership.PROJECT_MANAGER
         }
@@ -402,14 +402,17 @@ class PrivateProjectApiTests(TestCase):
         project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         payload = {
-            'project': project.id,
+            'project': project.data.get('id'),
             'user': self.user2.id,
             'role': ProjectMembership.PROJECT_MANAGER
         }
 
-        self.owner.post(ADD_MEMBER_URL, payload)
+        res = self.owner.post(ADD_MEMBER_URL, payload)
 
-        project_members = ProjectMembership.objects.filter(project=project)
+        print(res.data)
+
+        project_members = ProjectMembership.objects.filter(
+            project_id=project.data.get('id'))
 
         self.assertEqual(project_members.count(), 2)
 

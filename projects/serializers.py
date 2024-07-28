@@ -4,7 +4,7 @@ Serializers for the projects app.
 
 from rest_framework import serializers
 
-from projects.models import Projects
+from projects.models import Projects, ProjectMembership
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -15,5 +15,5 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 class ProjectMembershipSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Projects
+        model = ProjectMembership
         fields = '__all__'
