@@ -40,6 +40,15 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    def perform_create(self, serializer):
+        project = serializer.save()
+
+        ProjectMembership.objects.create(
+            project=project,
+            user=self.request.user,
+            role=ProjectMembership.PROJECT_MANAGER
+        )
+
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -105,3 +114,36 @@ class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         serializer.save()
 
         return Response(serializer.data)
+
+
+class ProjectAddMemberView(generics.CreateAPIView):
+    """
+    Add a member to a project.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProjectMembershipSerializer
+
+    def create(self, request, *args, **kwargs):
+        project = get_object_or_404(Projects, id=kwargs['pk'])
+
+        is_member = ProjectMembership.objects.filter(
+            project=project, user=request.user).exists()
+
+        if not is_member:
+            return Response(
+                {'error': 'You are not a member of this project.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        data = {
+            'project': project.id,
+            'user': request.data.get('user'),
+            'role': request.data.get('role', ProjectMembership.PROJECT_MEMBER)
+        }
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
