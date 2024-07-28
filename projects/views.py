@@ -127,20 +127,30 @@ class ProjectAddMemberView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         project = get_object_or_404(Projects, id=kwargs['pk'])
 
-        is_member = ProjectMembership.objects.filter(
-            project=project, user=request.user).exists()
+        is_manager = ProjectMembership.objects.filter(
+            project=project, user=request.user, role=ProjectMembership.PROJECT_MANAGER).exists()
 
-        if not is_member:
+        if not is_manager:
             return Response(
-                {'error': 'You are not a member of this project.'},
+                {'error': 'You are not a manager of this project.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        user_id = request.data.get('user', None)
+
         data = {
             'project': project.id,
-            'user': request.data.get('user'),
+            'user': user_id,
             'role': request.data.get('role', ProjectMembership.PROJECT_MEMBER)
         }
+
+        is_organization_member = Membership.objects.filter(
+            organization=project.organization, user=user_id).exists()
+
+        if not is_organization_member:
+            return Response(
+                {'error': 'User is not a member of the organization.'},
+                status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
