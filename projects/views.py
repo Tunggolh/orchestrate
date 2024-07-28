@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from organizations.models import Membership
-from projects.serializers import ProjectSerializer, ProjectMembershipSerializer
+from projects.serializers import ProjectMembersSerializer, ProjectSerializer, ProjectMembershipSerializer
 from projects.models import Projects, ProjectMembership
 
 
@@ -133,6 +133,38 @@ class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        return Response(serializer.data)
+
+
+class ProjectMembersListView(generics.ListAPIView):
+    """
+    List all members of a project.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProjectMembersSerializer
+
+    def list(self, request, *args, **kwargs):
+        project = get_object_or_404(Projects, id=kwargs['pk'])
+
+        is_member = ProjectMembership.objects.filter(
+            project=project, user=request.user).exists()
+
+        if not is_member:
+            return Response(
+                {'error': 'You are not a member of this project.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        queryset = ProjectMembership.objects.filter(project=project)
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 
