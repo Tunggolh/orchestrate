@@ -12,7 +12,7 @@ from organizations.serializers import MembershipSerializer, OrganizationSerializ
 from organizations.models import Organization, Membership
 
 
-class OrganizationListView(generics.ListCreateAPIView):
+class OrganizationListCreateView(generics.ListCreateAPIView):
     """
     List all organizations the user is a member of or create a new organization.
     """
