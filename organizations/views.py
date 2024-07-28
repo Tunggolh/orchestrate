@@ -131,6 +131,7 @@ class AddMemberView(generics.CreateAPIView):
 
 class RemoveMemberView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = MembershipSerializer
 
     def destroy(self, request, *args, **kwargs):
         organization = get_object_or_404(Organization, id=kwargs['pk'])

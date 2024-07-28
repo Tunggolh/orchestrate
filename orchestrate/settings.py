@@ -139,3 +139,10 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'ENUM_NAME_OVERRIDES': {
+        'OrganizationRoleEnum': 'organizations.models.Membership.ROLE_CHOICES',
+        'ProjectRoleEnum': 'projects.models.ProjectMembership.ROLE_CHOICES',
+    },
+}

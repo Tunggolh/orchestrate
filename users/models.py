@@ -35,5 +35,5 @@ class User(AbstractBaseUser, BaseModel):
         return self.email
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
