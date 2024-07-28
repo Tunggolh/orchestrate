@@ -21,17 +21,24 @@ class ProjectListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProjectSerializer
 
-    def get_queryset(self):
-        return Projects.objects.filter(members__user=self.request.user)
+    def list(self, request, *args, **kwargs):
 
-    def perform_create(self, serializer):
-        project = serializer.save()
+        organization_id = kwargs.get('organization_pk', None)
 
-        ProjectMembership.objects.create(
-            project=project,
-            user=self.request.user,
-            role=ProjectMembership.PROJECT_MANAGER
-        )
+        if organization_id:
+            queryset = Projects.objects.filter(organization=organization_id)
+        else:
+            queryset = Projects.objects.filter(
+                members__user=request.user)
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
