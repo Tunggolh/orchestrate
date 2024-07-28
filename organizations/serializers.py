@@ -17,8 +17,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 class MembersSerializer(serializers.ModelSerializer):
     """Serializer for organization members"""
-    member_name = serializers.ReadOnlyField(source='user.full_name')
-    member_id = serializers.ReadOnlyField(source='user.id')
+    member_name: str = serializers.ReadOnlyField(source='user.full_name')
+    member_id: int = serializers.ReadOnlyField(source='user.id')
 
     class Meta:
         model = Membership

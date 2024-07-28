@@ -14,8 +14,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class ProjectMembersSerializer(serializers.ModelSerializer):
-    member_id = serializers.ReadOnlyField(source='user.id')
-    member_name = serializers.ReadOnlyField(source='user.full_name')
+    member_id: int = serializers.ReadOnlyField(source='user.id')
+    member_name: str = serializers.ReadOnlyField(source='user.full_name')
 
     class Meta:
         model = ProjectMembership
