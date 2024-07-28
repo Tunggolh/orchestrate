@@ -13,6 +13,7 @@ from .models import Projects, ProjectMembership
 
 LIST_CREATE_PROJECT_URL = reverse('projects:list_create')
 DETAIL_PROJECT_URL = reverse('projects:detail', kwargs={'pk': 1})
+MEMBERS_PROJECT_URL = reverse('projects:members', kwargs={'pk': 1})
 ADD_MEMBER_URL = reverse('projects:add_member', kwargs={'pk': 1})
 REMOVE_MEMBER_URL = reverse('projects:remove_member', kwargs={'pk': 1})
 
@@ -308,6 +309,20 @@ class PrivateProjectApiTests(TestCase):
         res = self.member.patch(DETAIL_PROJECT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_retrieve_project_members_successful(self):
+        payload = {
+            'name': 'Test Project',
+            'description': 'Test Description',
+            'organization': self.organization.id
+        }
+
+        self.owner.post(LIST_CREATE_PROJECT_URL, payload)
+
+        res = self.owner.get(MEMBERS_PROJECT_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
 
     def test_add_member_to_project_successful(self):
         project_payload = {
