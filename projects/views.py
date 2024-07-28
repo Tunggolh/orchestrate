@@ -50,8 +50,19 @@ class ProjectListCreateView(generics.ListCreateAPIView):
             role=ProjectMembership.PROJECT_MANAGER
         )
 
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+    def post(self, request, *args, **kwargs):
+
+        data = request.data
+        organization_pk = kwargs.get('organization_pk', None)
+
+        if organization_pk:
+            data = {
+                'organization': organization_pk,
+                'name': data.get('name', None),
+                'description': data.get('description', None)
+            }
+
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
 
         organization_id = serializer.validated_data.get('organization', None)
