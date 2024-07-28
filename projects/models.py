@@ -23,8 +23,10 @@ class ProjectMembership(models.Model):
         (PROJECT_MEMBER, 'Project Member'),
     ]
 
-    project = models.ForeignKey(Projects, on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    project = models.ForeignKey(
+        Projects, on_delete=models.CASCADE, related_name='members')
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name='projects')
     role = models.CharField(
         max_length=10, choices=ROLE_CHOICES, default=PROJECT_MEMBER)
 
