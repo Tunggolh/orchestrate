@@ -333,7 +333,8 @@ class PrivateProjectApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
-        project_members = ProjectMembership.objects.filter(project=project)
+        project_members = ProjectMembership.objects.filter(
+            project_id=project.data.get('id'))
 
         self.assertEqual(project_members.count(), 2)
 
@@ -373,22 +374,24 @@ class PrivateProjectApiTests(TestCase):
         payload = {
             'project': project.data.get('id'),
             'user': self.user2.id,
-            'role': ProjectMembership.PROJECT_MANAGER
+            'role': ProjectMembership.PROJECT_MEMBER
         }
 
         self.owner.post(ADD_MEMBER_URL, payload)
 
-        project_members = ProjectMembership.objects.filter(project=project)
+        project_members = ProjectMembership.objects.filter(
+            project_id=project.data.get('id'))
 
         self.assertEqual(project_members.count(), 2)
 
         payload = {'user': self.user2.id}
 
-        res = self.owner.post(REMOVE_MEMBER_URL, payload)
+        res = self.owner.delete(REMOVE_MEMBER_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
-        project_members = ProjectMembership.objects.filter(project=project)
+        project_members = ProjectMembership.objects.filter(
+            project_id=project.data.get('id'))
 
         self.assertEqual(project_members.count(), 1)
 
@@ -409,8 +412,6 @@ class PrivateProjectApiTests(TestCase):
 
         res = self.owner.post(ADD_MEMBER_URL, payload)
 
-        print(res.data)
-
         project_members = ProjectMembership.objects.filter(
             project_id=project.data.get('id'))
 
@@ -418,6 +419,6 @@ class PrivateProjectApiTests(TestCase):
 
         payload = {'user': self.user2.id}
 
-        res = self.owner3.post(REMOVE_MEMBER_URL, payload)
+        res = self.owner3.delete(REMOVE_MEMBER_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
