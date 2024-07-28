@@ -8,7 +8,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from organizations.serializers import MembershipSerializer, OrganizationSerializer
+from organizations.serializers import MembersSerializer, MembershipSerializer, OrganizationSerializer
 from organizations.models import Organization, Membership
 
 
@@ -71,6 +71,34 @@ class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             )
 
         return self.partial_update(request, *args, **kwargs)
+
+
+class MembersListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = MembersSerializer
+
+    def list(self, request, *args, **kwargs):
+        organization = get_object_or_404(Organization, id=kwargs['pk'])
+
+        is_member = Membership.objects.filter(
+            organization=organization, user=request.user).exists()
+
+        if not is_member:
+            return Response(
+                {'error': 'You are not a member of this organization.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        queryset = Membership.objects.filter(organization=organization)
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class AddMemberView(generics.CreateAPIView):
