@@ -14,6 +14,7 @@ from users.tests import create_user
 
 LIST_CREATE_ORGANIZATION_URL = reverse('organizations:list_create')
 DETAIL_ORGANIZATION_URL = reverse('organizations:detail', kwargs={'pk': 1})
+MEMBERS_ORGANIZATION_URL = reverse('organizations:members', kwargs={'pk': 1})
 ADD_MEMBER_URL = reverse('organizations:add_member', kwargs={'pk': 1})
 REMOVE_MEMBER_URL = reverse('organizations:remove_member', kwargs={'pk': 1})
 
@@ -162,6 +163,19 @@ class PrivateOrganizationApiTests(TestCase):
 
         self.assertEqual(membership.role, Membership.ROLE_OWNER)
         self.assertEqual(membership.user, self.user)
+
+    def test_retrieve_organization_members_successful(self):
+        payload = {
+            'name': 'Test Organization',
+            'domain': 'test.com'
+        }
+
+        self.client.post(LIST_CREATE_ORGANIZATION_URL, payload)
+
+        res = self.client.get(MEMBERS_ORGANIZATION_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
 
     def test_add_member_to_organization_successful(self):
         payload = {
