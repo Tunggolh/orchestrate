@@ -41,14 +41,12 @@ class OrganizationModelTests(TestCase):
 
 class MembershipModelTests(TestCase):
     def setUp(self):
-        self.client = APIClient()
         self.user = create_user(
             email='test@example.com',
             first_name='John',
             last_name='Doe',
             password='testpass123'
         )
-        self.client.force_authenticate(self.user)
 
     def test_create_membership_successful(self):
         organization = create_organization(
