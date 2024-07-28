@@ -11,8 +11,7 @@ from users.tests import create_user
 from .models import Projects, ProjectMembership
 
 
-CREATE_PROJECT_URL = reverse('projects:create')
-LIST_PROJECTS_URL = reverse('projects:list')
+LIST_CREATE_PROJECT_URL = reverse('projects:create')
 DETAIL_PROJECT_URL = reverse('projects:detail', kwargs={'pk': 1})
 ADD_MEMBER_URL = reverse('projects:add_member', kwargs={'pk': 1})
 REMOVE_MEMBER_URL = reverse('projects:remove_member', kwargs={'pk': 1})
@@ -96,12 +95,12 @@ class PublicProjectApiTests(TestCase):
             'organization': 1
         }
 
-        res = self.client.post(CREATE_PROJECT_URL, payload)
+        res = self.client.post(LIST_CREATE_PROJECT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_retrieve_projects_unauthorized(self):
-        res = self.client.get(LIST_PROJECTS_URL)
+        res = self.client.get(LIST_CREATE_PROJECT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -190,7 +189,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        res = self.owner.post(CREATE_PROJECT_URL, payload)
+        res = self.owner.post(LIST_CREATE_PROJECT_URL, payload)
 
         self.assertEqual(res.status_code, 201)
 
@@ -201,7 +200,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        res = self.member.post(CREATE_PROJECT_URL, payload)
+        res = self.member.post(LIST_CREATE_PROJECT_URL, payload)
 
         self.assertEqual(res.status_code, 403)
 
@@ -212,7 +211,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization2.id
         }
 
-        res = self.owner.post(CREATE_PROJECT_URL, payload)
+        res = self.owner.post(LIST_CREATE_PROJECT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -229,10 +228,10 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization2.id
         }
 
-        self.owner.post(CREATE_PROJECT_URL, payload)
-        self.owner2.post(CREATE_PROJECT_URL, payload2)
+        self.owner.post(LIST_CREATE_PROJECT_URL, payload)
+        self.owner2.post(LIST_CREATE_PROJECT_URL, payload2)
 
-        res = self.owner.get(LIST_PROJECTS_URL)
+        res = self.owner.get(LIST_CREATE_PROJECT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
@@ -244,7 +243,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        project = self.owner.post(CREATE_PROJECT_URL, payload)
+        project = self.owner.post(LIST_CREATE_PROJECT_URL, payload)
 
         res = self.owner.get(DETAIL_PROJECT_URL)
 
@@ -262,7 +261,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        self.owner.post(CREATE_PROJECT_URL, payload)
+        self.owner.post(LIST_CREATE_PROJECT_URL, payload)
 
         res = self.owner2.get(DETAIL_PROJECT_URL)
 
@@ -275,7 +274,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        self.owner.post(CREATE_PROJECT_URL, payload)
+        self.owner.post(LIST_CREATE_PROJECT_URL, payload)
 
         payload = {
             'name': 'Updated Test Project',
@@ -296,7 +295,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        self.owner.post(CREATE_PROJECT_URL, payload)
+        self.owner.post(LIST_CREATE_PROJECT_URL, payload)
 
         payload = {
             'name': 'Updated Test Project',
@@ -314,7 +313,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        project = self.owner.post(CREATE_PROJECT_URL, project_payload)
+        project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         project_members = ProjectMembership.objects.filter(
             id=project.id)
@@ -342,7 +341,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        project = self.owner.post(CREATE_PROJECT_URL, project_payload)
+        project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         project_members = ProjectMembership.objects.filter(
             id=project.id)
@@ -366,7 +365,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        project = self.owner.post(CREATE_PROJECT_URL, project_payload)
+        project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         payload = {
             'project': project.id,
@@ -397,7 +396,7 @@ class PrivateProjectApiTests(TestCase):
             'organization': self.organization.id
         }
 
-        project = self.owner.post(CREATE_PROJECT_URL, project_payload)
+        project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
 
         payload = {
             'project': project.id,
