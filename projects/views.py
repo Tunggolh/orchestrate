@@ -157,3 +157,43 @@ class ProjectAddMemberView(generics.CreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class ProjectRemoveMemberView(generics.DestroyAPIView):
+    """
+    Remove a member from a project.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProjectMembershipSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        project = get_object_or_404(Projects, id=kwargs['pk'])
+
+        is_manager = ProjectMembership.objects.filter(
+            project=project, user=request.user, role=ProjectMembership.PROJECT_MANAGER).exists()
+
+        if not is_manager:
+            return Response(
+                {'error': 'You are not a manager of this project.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        user_id = request.data.get('user', None)
+
+        membership = ProjectMembership.objects.filter(
+            project=project, user=user_id).first()
+
+        if not membership:
+            return Response(
+                {'error': 'User is not a member of the project.'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        if membership.role == ProjectMembership.PROJECT_MANAGER:
+            return Response(
+                {'error': 'Cannot remove a manager from the project.'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        membership.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
