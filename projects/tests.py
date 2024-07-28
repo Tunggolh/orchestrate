@@ -153,6 +153,9 @@ class PrivateProjectApiTests(TestCase):
             domain='test.com'
         )
 
+        self.owner.force_authenticate(self.user)
+        self.member.force_authenticate(self.user2)
+
         create_membership(
             user=self.user,
             organization=self.organization,

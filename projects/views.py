@@ -3,6 +3,7 @@ This file contains the views for the projects app.
 """
 
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -56,7 +57,9 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         organization_id = serializer.validated_data.get('organization', None)
 
         organization_member = Membership.objects.filter(
-            organization=organization_id, user=request.user).exists()
+            organization=organization_id, user=request.user).filter(
+                Q(role=Membership.ROLE_OWNER) | Q(role=Membership.ROLE_MANAGER)
+        ).exists()
 
         if not organization_member:
             return Response(
