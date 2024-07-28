@@ -113,12 +113,18 @@ class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     def patch(self, request, *args, **kwargs):
         project = self.get_object()
 
-        is_member = ProjectMembership.objects.filter(
-            project=project, user=request.user).exists()
+        member = ProjectMembership.objects.filter(
+            project=project, user=request.user).first()
 
-        if not is_member:
+        if not member:
             return Response(
                 {'error': 'You are not a member of this project.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if member.role != ProjectMembership.PROJECT_MANAGER:
+            return Response(
+                {'error': "You don't have permission to update this project."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -146,7 +152,7 @@ class ProjectAddMemberView(generics.CreateAPIView):
 
         if not is_manager:
             return Response(
-                {'error': 'You are not a manager of this project.'},
+                {'error': "You don't have the permission to create a project"},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -189,7 +195,7 @@ class ProjectRemoveMemberView(generics.DestroyAPIView):
 
         if not is_manager:
             return Response(
-                {'error': 'You are not a manager of this project.'},
+                {'error': "You don't have a permission to remove a member"},
                 status=status.HTTP_403_FORBIDDEN
             )
 
