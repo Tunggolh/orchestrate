@@ -11,7 +11,7 @@ from users.tests import create_user
 from .models import Projects, ProjectMembership
 
 
-LIST_CREATE_PROJECT_URL = reverse('projects:create')
+LIST_CREATE_PROJECT_URL = reverse('projects:list_create')
 DETAIL_PROJECT_URL = reverse('projects:detail', kwargs={'pk': 1})
 ADD_MEMBER_URL = reverse('projects:add_member', kwargs={'pk': 1})
 REMOVE_MEMBER_URL = reverse('projects:remove_member', kwargs={'pk': 1})
