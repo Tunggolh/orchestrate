@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from organizations.models import Membership
+from projects.mixins import ProjectPermissionMixin
 from projects.serializers import ProjectMembersSerializer, ProjectSerializer, ProjectMembershipSerializer
 from projects.models import Projects, ProjectMembership
 
@@ -83,7 +84,7 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView, ProjectPermissionMixin):
     """
     Retrieve or update a project.
     """
@@ -98,14 +99,11 @@ class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     def retrieve(self, request, *args, **kwargs):
         project = self.get_object()
 
-        is_member = ProjectMembership.objects.filter(
-            project=project, user=request.user).exists()
+        permission_error = self.check_permissions_member(
+            project.id, request.user)
 
-        if not is_member:
-            return Response(
-                {'error': 'You are not a member of this project.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if permission_error:
+            return permission_error
 
         serializer = self.get_serializer(project)
         return Response(serializer.data)
@@ -113,20 +111,11 @@ class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     def patch(self, request, *args, **kwargs):
         project = self.get_object()
 
-        member = ProjectMembership.objects.filter(
-            project=project, user=request.user).first()
+        permission_error = self.check_permissions_manager(
+            project.id, request.user)
 
-        if not member:
-            return Response(
-                {'error': 'You are not a member of this project.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        if member.role != ProjectMembership.PROJECT_MANAGER:
-            return Response(
-                {'error': "You don't have permission to update this project."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if permission_error:
+            return permission_error
 
         serializer = self.get_serializer(
             project, data=request.data, partial=True)
@@ -136,7 +125,7 @@ class ProjectRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data)
 
 
-class ProjectMembersListView(generics.ListAPIView):
+class ProjectMembersListView(generics.ListAPIView, ProjectPermissionMixin):
     """
     List all members of a project.
     """
@@ -147,14 +136,11 @@ class ProjectMembersListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         project = get_object_or_404(Projects, id=kwargs['pk'])
 
-        is_member = ProjectMembership.objects.filter(
-            project=project, user=request.user).exists()
+        permission_error = self.check_permissions_member(
+            project.id, request.user)
 
-        if not is_member:
-            return Response(
-                {'error': 'You are not a member of this project.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if permission_error:
+            return permission_error
 
         queryset = ProjectMembership.objects.filter(project=project)
 
@@ -168,7 +154,7 @@ class ProjectMembersListView(generics.ListAPIView):
         return Response(serializer.data)
 
 
-class ProjectAddMemberView(generics.CreateAPIView):
+class ProjectAddMemberView(generics.CreateAPIView, ProjectPermissionMixin):
     """
     Add a member to a project.
     """
@@ -179,14 +165,11 @@ class ProjectAddMemberView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         project = get_object_or_404(Projects, id=kwargs['pk'])
 
-        is_manager = ProjectMembership.objects.filter(
-            project=project, user=request.user, role=ProjectMembership.PROJECT_MANAGER).exists()
+        permission_error = self.check_permissions_manager(
+            project.id, request.user)
 
-        if not is_manager:
-            return Response(
-                {'error': "You don't have the permission to create a project"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if permission_error:
+            return permission_error
 
         user_id = request.data.get('user', None)
 
@@ -211,7 +194,7 @@ class ProjectAddMemberView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class ProjectRemoveMemberView(generics.DestroyAPIView):
+class ProjectRemoveMemberView(generics.DestroyAPIView, ProjectPermissionMixin):
     """
     Remove a member from a project.
     """
@@ -222,14 +205,11 @@ class ProjectRemoveMemberView(generics.DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         project = get_object_or_404(Projects, id=kwargs['pk'])
 
-        is_manager = ProjectMembership.objects.filter(
-            project=project, user=request.user, role=ProjectMembership.PROJECT_MANAGER).exists()
+        permission_error = self.check_permissions_manager(
+            project.id, request.user)
 
-        if not is_manager:
-            return Response(
-                {'error': "You don't have a permission to remove a member"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if permission_error:
+            return permission_error
 
         user_id = request.data.get('user', None)
 
