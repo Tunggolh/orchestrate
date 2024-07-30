@@ -21,7 +21,7 @@ class OrganizationListCreateView(generics.ListCreateAPIView):
     serializer_class = OrganizationSerializer
 
     def get_queryset(self):
-        return Organization.objects.filter(memberships__user=self.request.user)
+        return Organization.objects.filter(members__user=self.request.user)
 
     def perform_create(self, serializer):
         organization = serializer.save()

@@ -23,9 +23,9 @@ class Membership(models.Model):
     ]
 
     user = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, related_name='memberships')
+        get_user_model(), on_delete=models.CASCADE, related_name='organizations')
     organization = models.ForeignKey(
-        Organization, on_delete=models.CASCADE, related_name='memberships')
+        Organization, on_delete=models.CASCADE, related_name='members')
     date_joined = models.DateTimeField(auto_now_add=True)
     role = models.CharField(
         max_length=255, choices=ROLE_CHOICES, default=ROLE_MEMBER)

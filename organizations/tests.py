@@ -101,7 +101,7 @@ class PrivateOrganizationApiTests(TestCase):
         res = self.client.get(LIST_CREATE_ORGANIZATION_URL)
 
         organizations = Organization.objects.filter(
-            memberships__user=self.user)
+            members__user=self.user)
         serializer = OrganizationSerializer(organizations, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
