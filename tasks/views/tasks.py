@@ -30,7 +30,7 @@ class TaskListCreateView(generics.ListCreateAPIView, ProjectPermissionMixin):
         project_id = request.GET.get('project_id', None)
         column_id = request.GET.get('column_id', None)
 
-        if not column_id or not project_id:
+        if not column_id and not project_id:
             return Response(
                 {"message": "query params project_id or column_id are required"},
                 status=status.HTTP_400_BAD_REQUEST
@@ -54,6 +54,9 @@ class TaskListCreateView(generics.ListCreateAPIView, ProjectPermissionMixin):
         if column_id:
             filters['column_id'] = column_id
 
+        if request.GET.get('assignee_id'):
+            filters['assignee_id'] = request.GET.get('assignee_id')
+
         queryset = Tasks.objects.filter(**filters)
 
         page = self.paginate_queryset(queryset)
@@ -73,8 +76,17 @@ class TaskListCreateView(generics.ListCreateAPIView, ProjectPermissionMixin):
         permission_error = self.check_permissions_member(
             project.id, request.user)
 
+        is_assignee_member = self.is_project_member(
+            project, serializer.validated_data.get('assignee'))
+
         if permission_error:
             return permission_error
+
+        if not is_assignee_member:
+            return Response(
+                {"message": "Assignee is not a member of this project"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
@@ -97,7 +109,7 @@ class TaskRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView, Proje
         project_id = request.GET.get('project_id', None)
         column_id = request.GET.get('column_id', None)
 
-        if not column_id or not project_id:
+        if not column_id and not project_id:
             return Response(
                 {"message": "query params project_id or column_id are required"},
                 status=status.HTTP_400_BAD_REQUEST

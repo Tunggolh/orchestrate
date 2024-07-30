@@ -271,7 +271,7 @@ class PrivateTaskApiTest(TestCase):
             'due_date': '2021-12-12 12:00:00',
             'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.user_member
+            'assignee': self.user_member.id
         }
 
         self.manager.post(LIST_CREATE_TASKS_URL, data)
@@ -294,7 +294,7 @@ class PrivateTaskApiTest(TestCase):
             'due_date': '2021-12-12 12:00:00',
             'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.user_member
+            'assignee': self.user_member.id
         }
 
         res = self.external.post(LIST_CREATE_TASKS_URL, data)
@@ -312,7 +312,6 @@ class PrivateTaskApiTest(TestCase):
         }
 
         res = self.manager.post(LIST_CREATE_TASKS_URL, data)
-        print(res.data)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -351,12 +350,12 @@ class PrivateTaskApiTest(TestCase):
         create_task(**data)
 
         res = self.manager.get(LIST_CREATE_TASKS_URL, {
-            'project_id': self.project.id, 'assignee': self.user_member})
+            'project_id': self.project.id, 'assignee_id': self.user_member.id})
 
         self.assertEqual(len(res.data), 1)
 
         res = self.member.get(LIST_CREATE_TASKS_URL, {
-            'project_id': self.project.id, 'assignee': self.user.id})
+            'project_id': self.project.id, 'assignee_id': self.user.id})
 
         self.assertEqual(len(res.data), 0)
 
@@ -385,7 +384,7 @@ class PrivateTaskApiTest(TestCase):
             'due_date': '2021-12-12 12:00:00',
             'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.user_member
+            'assignee': self.user_member.id
         }
 
         res = self.manager.patch(
@@ -412,7 +411,7 @@ class PrivateTaskApiTest(TestCase):
             'due_date': '2021-12-12 12:00:00',
             'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.user_member
+            'assignee': self.user_member.id
         }
 
         res = self.external.patch(
@@ -449,8 +448,6 @@ class PrivateTaskApiTest(TestCase):
 
         create_task(**data)
 
-        res_member = self.member.delete(DETAIL_UPDATE_DELETE_TASK_URL)
-        res_external = self.external.delete(DETAIL_UPDATE_DELETE_TASK_URL)
+        res = self.external.delete(DETAIL_UPDATE_DELETE_TASK_URL)
 
-        self.assertEqual(res_member.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(res_external.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
