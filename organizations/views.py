@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from organizations.serializers import MembersSerializer, MembershipSerializer, OrganizationSerializer
 from organizations.models import Organization, Membership
+from organizations.mixins import OrganizationPermissionMixin
 
 
 class OrganizationListCreateView(generics.ListCreateAPIView):
@@ -33,7 +34,7 @@ class OrganizationListCreateView(generics.ListCreateAPIView):
         )
 
 
-class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView, OrganizationPermissionMixin):
     """
     Retrieve or update an organization.
     """
@@ -48,46 +49,39 @@ class OrganizationRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     def retrieve(self, request, *args, **kwargs):
         organization = self.get_object()
 
-        is_member = Membership.objects.filter(
-            organization=organization, user=request.user).exists()
+        permission_error = self.check_permissions_member(
+            organization.id, request.user)
 
-        if not is_member:
-            return Response(
-                {'error': 'You are not a member of this organization.'},
-                status=status.HTTP_403_FORBIDDEN)
+        if permission_error:
+            return permission_error
 
         serializer = self.get_serializer(organization)
         return Response(serializer.data)
 
     def patch(self, request, *args, **kwargs):
         organization = self.get_object()
-        organization_owner = Membership.objects.get(
-            organization=organization, role=Membership.ROLE_OWNER)
 
-        if organization_owner.user != request.user:
-            return Response(
-                {'error': 'You are not the owner of this organization.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        permission_error = self.check_permissions_owner(
+            organization.id, request.user)
+
+        if permission_error:
+            return permission_error
 
         return self.partial_update(request, *args, **kwargs)
 
 
-class MembersListView(generics.ListAPIView):
+class MembersListView(generics.ListAPIView, OrganizationPermissionMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = MembersSerializer
 
     def list(self, request, *args, **kwargs):
         organization = get_object_or_404(Organization, id=kwargs['pk'])
 
-        is_member = Membership.objects.filter(
-            organization=organization, user=request.user).exists()
+        permission_error = self.check_permissions_member(
+            organization.id, request.user)
 
-        if not is_member:
-            return Response(
-                {'error': 'You are not a member of this organization.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if permission_error:
+            return permission_error
 
         queryset = Membership.objects.filter(organization=organization)
 
@@ -101,20 +95,18 @@ class MembersListView(generics.ListAPIView):
         return Response(serializer.data)
 
 
-class AddMemberView(generics.CreateAPIView):
+class AddMemberView(generics.CreateAPIView, OrganizationPermissionMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = MembershipSerializer
 
     def create(self, request, *args, **kwargs):
         organization = get_object_or_404(Organization, id=kwargs['pk'])
-        organization_owner = Membership.objects.get(
-            organization=organization, role=Membership.ROLE_OWNER)
 
-        if organization_owner.user != request.user:
-            return Response(
-                {'error': 'You are not the owner of this organization.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        permission_error = self.check_permissions_owner(
+            organization.id, request.user)
+
+        if permission_error:
+            return permission_error
 
         data = {
             'organization': organization.id,
@@ -129,20 +121,18 @@ class AddMemberView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class RemoveMemberView(generics.DestroyAPIView):
+class RemoveMemberView(generics.DestroyAPIView, OrganizationPermissionMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = MembershipSerializer
 
     def destroy(self, request, *args, **kwargs):
         organization = get_object_or_404(Organization, id=kwargs['pk'])
-        organization_owner = Membership.objects.get(
-            organization=organization, role=Membership.ROLE_OWNER)
 
-        if organization_owner.user != request.user:
-            return Response(
-                {'error': 'You are not the owner of this organization.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        permission_error = self.check_permissions_owner(
+            organization.id, request.user)
+
+        if permission_error:
+            return permission_error
 
         membership = get_object_or_404(
             Membership, user=request.data.get('user'), organization=organization)

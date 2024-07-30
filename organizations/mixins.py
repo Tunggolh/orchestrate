@@ -24,7 +24,7 @@ class OrganizationPermissionMixin:
         return None
 
     def is_organization_member(self, organization, user):
-        return organization.memberships.filter(user=user).exists()
+        return organization.members.filter(user=user).exists()
 
     def is_organization_owner(self, organization, user):
-        return organization.memberships.filter(user=user, role=Membership.ORGANIZATION_OWNER).exists()
+        return organization.members.filter(user=user, role=Membership.ROLE_OWNER).exists()
