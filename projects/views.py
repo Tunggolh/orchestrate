@@ -9,6 +9,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from organizations.mixins import OrganizationPermissionMixin
 from organizations.models import Membership
 from projects.mixins import ProjectPermissionMixin
 from projects.serializers import ProjectMembersSerializer, ProjectSerializer, ProjectMembershipSerializer
@@ -154,7 +155,7 @@ class ProjectMembersListView(generics.ListAPIView, ProjectPermissionMixin):
         return Response(serializer.data)
 
 
-class ProjectAddMemberView(generics.CreateAPIView, ProjectPermissionMixin):
+class ProjectAddMemberView(generics.CreateAPIView, ProjectPermissionMixin, OrganizationPermissionMixin):
     """
     Add a member to a project.
     """
@@ -179,8 +180,8 @@ class ProjectAddMemberView(generics.CreateAPIView, ProjectPermissionMixin):
             'role': request.data.get('role', ProjectMembership.PROJECT_MEMBER)
         }
 
-        is_organization_member = Membership.objects.filter(
-            organization=project.organization, user=user_id).exists()
+        is_organization_member = self.is_organization_member(
+            project.organization, user_id)
 
         if not is_organization_member:
             return Response(
@@ -202,7 +203,14 @@ class ProjectRemoveMemberView(generics.DestroyAPIView, ProjectPermissionMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = ProjectMembershipSerializer
 
-    def destroy(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
+        user_id = request.data.get('user', None)
+
+        if not user_id:
+            return Response(
+                {'error': 'User is required.'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         project = get_object_or_404(Projects, id=kwargs['pk'])
 
         permission_error = self.check_permissions_manager(
@@ -211,7 +219,16 @@ class ProjectRemoveMemberView(generics.DestroyAPIView, ProjectPermissionMixin):
         if permission_error:
             return permission_error
 
-        user_id = request.data.get('user', None)
+        return self.destroy(request, user_id, project)
+
+    def destroy(self, request, user_id, project):
+
+        is_current_user = int(user_id) == request.user.id
+
+        if is_current_user and ProjectMembership.objects.filter(project=project).count() == 1:
+            return Response(
+                {'error': "Cannot remove yourself from the project. You're the only member."},
+                status=status.HTTP_400_BAD_REQUEST)
 
         membership = ProjectMembership.objects.filter(
             project=project, user=user_id).first()
@@ -221,7 +238,7 @@ class ProjectRemoveMemberView(generics.DestroyAPIView, ProjectPermissionMixin):
                 {'error': 'User is not a member of the project.'},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        if membership.role == ProjectMembership.PROJECT_MANAGER:
+        if not is_current_user and membership.role == ProjectMembership.PROJECT_MANAGER:
             return Response(
                 {'error': 'Cannot remove a manager from the project.'},
                 status=status.HTTP_400_BAD_REQUEST)

@@ -352,6 +352,27 @@ class PrivateProjectApiTests(TestCase):
 
         self.assertEqual(project_members.count(), 2)
 
+    def test_add_member_to_project_invalid(self):
+        project_payload = {
+            'name': 'Test Project',
+            'description': 'Test Description',
+            'organization': self.organization.id
+        }
+
+        project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
+
+        payload = {
+            'project': project.data.get('id'),
+            'user': self.user2.id,
+            'role': ProjectMembership.PROJECT_MANAGER
+        }
+
+        self.owner.post(ADD_MEMBER_URL, payload)
+
+        res = self.owner.post(ADD_MEMBER_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_add_member_to_project_unauthorized(self):
         project_payload = {
             'name': 'Test Project',
@@ -408,6 +429,43 @@ class PrivateProjectApiTests(TestCase):
             project_id=project.data.get('id'))
 
         self.assertEqual(project_members.count(), 1)
+
+    def test_remove_member_to_project_invalid(self):
+        project_payload = {
+            'name': 'Test Project',
+            'description': 'Test Description',
+            'organization': self.organization.id
+        }
+
+        project = self.owner.post(LIST_CREATE_PROJECT_URL, project_payload)
+
+        payload = {
+            'project': project.data.get('id'),
+            'user': self.user2.id,
+            'role': ProjectMembership.PROJECT_MEMBER
+        }
+
+        self.owner.post(ADD_MEMBER_URL, payload)
+
+        remove_payload = {'user': self.user2.id}
+
+        self.owner.delete(REMOVE_MEMBER_URL, remove_payload)
+
+        res = self.owner.delete(REMOVE_MEMBER_URL, remove_payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+        res = self.owner.delete(REMOVE_MEMBER_URL, {
+            'user': self.user3.id
+        })
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+        res = self.owner.delete(REMOVE_MEMBER_URL, {
+            'user': self.user.id
+        })
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_remove_member_to_project_unauthorized(self):
         project_payload = {
