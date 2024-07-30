@@ -1,6 +1,6 @@
-# Orchestrate
+# Orchestrate API
 
-## A Task Management Web Application for Organizations
+## A Task Management API for Organizations
 
 > A Project to Focused on Learning and Applying Test-Driven Development
 
