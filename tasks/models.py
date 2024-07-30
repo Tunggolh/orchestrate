@@ -25,7 +25,7 @@ class Task(BaseModel):
     description = models.TextField()
     due_date = models.DateTimeField()
 
-    columns = models.ForeignKey(
+    column = models.ForeignKey(
         Columns, on_delete=models.CASCADE, related_name='tasks')
 
     project = models.ForeignKey(
