@@ -20,7 +20,7 @@ class Columns(models.Model):
         return self.name
 
 
-class Task(BaseModel):
+class Tasks(BaseModel):
     title = models.CharField(max_length=255, db_index=True)
     description = models.TextField()
     due_date = models.DateTimeField()
