@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.test import TestCase
 
 from django.urls import reverse
@@ -15,7 +16,7 @@ from tasks.models import Tasks
 from tasks.tests.test_columns import create_column
 from users.tests import create_user
 
-LIST_CREATE_TASKS_URL = reverse('tasks:list_create')
+LIST_CREATE_TASKS_URL = reverse('tasks:tasks_list_create')
 DETAIL_UPDATE_DELETE_TASK_URL = reverse('tasks:task_detail', kwargs={'pk': 1})
 
 
@@ -77,7 +78,7 @@ class TaskModelTest(TestCase):
             'assignee': self.user
         }
 
-        task = create_task(data)
+        task = create_task(**data)
 
         self.assertEqual(task.title, 'Test Task')
         self.assertEqual(task.description, 'Test Description')
@@ -95,7 +96,7 @@ class TaskModelTest(TestCase):
             'assignee': self.user
         }
 
-        task2 = create_task(data2)
+        task2 = create_task(**data2)
 
         self.assertEqual(task2.title, 'Test Task 2')
         self.assertEqual(task2.description, 'Test Description 2')
@@ -105,7 +106,7 @@ class TaskModelTest(TestCase):
         self.assertEqual(task2.assignee, self.user)
 
     def test_create_task_without_columns(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(IntegrityError):
             create_task({
                 'title': 'Test Task',
                 'description': 'Test Description',
@@ -322,7 +323,7 @@ class PrivateTaskApiTest(TestCase):
             'assignee': self.member.id
         }
 
-        create_task(data)
+        create_task(**data)
 
         res = self.manager.get(LIST_CREATE_TASKS_URL, {
             'project_id': self.project.id})
@@ -344,7 +345,7 @@ class PrivateTaskApiTest(TestCase):
             'assignee': self.member.id
         }
 
-        create_task(data)
+        create_task(**data)
 
         res = self.manager.get(LIST_CREATE_TASKS_URL, {
             'project_id': self.project.id, 'assignee': self.member.id})
@@ -373,7 +374,7 @@ class PrivateTaskApiTest(TestCase):
             'assignee': self.member.id
         }
 
-        create_task(data)
+        create_task(**data)
 
         data = {
             'title': 'Test Task Updated',
@@ -400,7 +401,7 @@ class PrivateTaskApiTest(TestCase):
             'assignee': self.member.id
         }
 
-        create_task(data)
+        create_task(**data)
 
         data = {
             'title': 'Test Task Updated',
@@ -426,7 +427,7 @@ class PrivateTaskApiTest(TestCase):
             'assignee': self.member.id
         }
 
-        create_task(data)
+        create_task(**data)
 
         res = self.manager.delete(DETAIL_UPDATE_DELETE_TASK_URL)
 
@@ -443,7 +444,7 @@ class PrivateTaskApiTest(TestCase):
             'assignee': self.member.id
         }
 
-        create_task(data)
+        create_task(**data)
 
         res_member = self.member.delete(DETAIL_UPDATE_DELETE_TASK_URL)
         res_external = self.external.delete(DETAIL_UPDATE_DELETE_TASK_URL)
