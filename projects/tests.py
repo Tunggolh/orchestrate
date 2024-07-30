@@ -1,11 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from organizations.models import Organization, Membership
+from organizations.models import Membership
 from organizations.tests import create_organization, create_membership
 from users.tests import create_user
 from .models import Projects, ProjectMembership
