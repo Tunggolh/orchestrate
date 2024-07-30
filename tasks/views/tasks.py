@@ -70,7 +70,7 @@ class TaskListCreateView(generics.ListCreateAPIView, ProjectPermissionMixin):
         serializer.is_valid(raise_exception=True)
 
         project_id = serializer.validated_data.get('project', None)
-        permission_error = self.check_permissions_manager(
+        permission_error = self.check_permissions_member(
             project_id, request.user)
 
         if permission_error:
@@ -95,10 +95,11 @@ class TaskRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView, Proje
 
     def get(self, request, *args, **kwargs):
         project_id = request.GET.get('project_id', None)
+        column_id = request.GET.get('column_id', None)
 
-        if not project_id:
+        if not column_id or not project_id:
             return Response(
-                {"message": "query params project_id is required"},
+                {"message": "query params project_id or column_id are required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -116,7 +117,7 @@ class TaskRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView, Proje
             task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        permission_error = self.check_permissions_manager(
+        permission_error = self.check_permissions_member(
             task.project.id, request.user)
 
         if permission_error:
@@ -132,7 +133,7 @@ class TaskRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView, Proje
     def destroy(self, request, *args, **kwargs):
         task = self.get_object()
 
-        permission_error = self.check_permissions_manager(
+        permission_error = self.check_permissions_member(
             task.project.id, request.user)
 
         if permission_error:
