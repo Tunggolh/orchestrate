@@ -52,7 +52,7 @@ class ProjectListCreateView(generics.ListCreateAPIView):
             role=ProjectMembership.PROJECT_MANAGER
         )
 
-    def post(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
 
         data = request.data
         organization_pk = kwargs.get('organization_pk', None)
