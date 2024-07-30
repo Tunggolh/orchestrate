@@ -4,7 +4,7 @@ Serializers for the tasks app
 
 from rest_framework import serializers
 
-from tasks.models import Columns, Task
+from tasks.models import Columns, Tasks
 
 
 class ColumnSerializer(serializers.ModelSerializer):
@@ -15,7 +15,7 @@ class ColumnSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Task
+        model = Tasks
         fields = '__all__'
 
 
@@ -24,5 +24,5 @@ class TaskListSerializer(serializers.ModelSerializer):
         source='assignee.full_name')
 
     class Meta:
-        model = Task
+        model = Tasks
         fields = '__all__'

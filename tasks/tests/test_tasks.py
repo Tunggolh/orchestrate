@@ -10,7 +10,7 @@ from organizations.tests import create_organization, create_membership
 from projects.models import ProjectMembership
 from projects.tests import create_projects, create_project_membership
 
-from tasks.models import Task
+from tasks.models import Tasks
 
 from tasks.tests.test_columns import create_column
 from users.tests import create_user
@@ -20,7 +20,7 @@ DETAIL_UPDATE_DELETE_TASK_URL = reverse('tasks:task_detail', kwargs={'pk': 1})
 
 
 def create_task(**params):
-    return Task.objects.create(**params)
+    return Tasks.objects.create(**params)
 
 
 class TaskModelTest(TestCase):
