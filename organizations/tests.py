@@ -323,23 +323,23 @@ class PrivateOrganizationApiTests(TestCase):
             'role': Membership.ROLE_MEMBER
         })
 
-        res = self.client.post(REMOVE_MEMBER_URL, {
+        res1 = self.client.delete(REMOVE_MEMBER_URL, {
             'user': user.id
         })
 
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res1.status_code, status.HTTP_204_NO_CONTENT)
 
-        res = self.client.post(REMOVE_MEMBER_URL, {
+        res2 = self.client.delete(REMOVE_MEMBER_URL, {
             'user': user.id
         })
 
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
 
-        res = self.client.post(REMOVE_MEMBER_URL, {
+        res3 = self.client.delete(REMOVE_MEMBER_URL, {
             'user': self.user.id
         })
 
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res3.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_remove_member_from_organization_unauthorized(self):
         payload = {

@@ -125,7 +125,15 @@ class RemoveMemberView(generics.DestroyAPIView, OrganizationPermissionMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = MembershipSerializer
 
-    def destroy(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
+        user = request.data.get('user', None)
+
+        if not user:
+            return Response(
+                {'error': 'User is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         organization = get_object_or_404(Organization, id=kwargs['pk'])
 
         permission_error = self.check_permissions_owner(
@@ -134,8 +142,30 @@ class RemoveMemberView(generics.DestroyAPIView, OrganizationPermissionMixin):
         if permission_error:
             return permission_error
 
+        is_member = self.is_organization_member(organization, user)
+
+        if not is_member:
+            return Response(
+                {'error': 'User is not a member of the organization.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return self.destroy(request, organization, *args, **kwargs)
+
+    def destroy(self, request, organization, *args, **kwargs):
+        user = request.data.get('user', None)
+
+        if int(user) == request.user.id:
+            owners = organization.members.filter(
+                role=Membership.ROLE_OWNER).count()
+
+            if owners == 1:
+                return Response(
+                    {'error': "You can't remove yourself from the organization because you are the only owner."},
+                    status=status.HTTP_400_BAD_REQUEST)
+
         membership = get_object_or_404(
-            Membership, user=request.data.get('user'), organization=organization)
+            Membership, user=user, organization=organization)
 
         self.perform_destroy(membership)
 
