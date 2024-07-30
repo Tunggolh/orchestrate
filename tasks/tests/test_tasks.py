@@ -12,8 +12,8 @@ from projects.models import ProjectMembership
 from projects.tests import create_projects, create_project_membership
 
 from tasks.models import Tasks
-
 from tasks.tests.test_columns import create_column
+
 from users.tests import create_user
 
 LIST_CREATE_TASKS_URL = reverse('tasks:tasks_list_create')
@@ -26,54 +26,54 @@ def create_task(**params):
 
 class TaskModelTest(TestCase):
     def setUp(self) -> None:
-        self.user = create_user({
-            'email': 'test@example.com',
-            'password': 'testpass123',
-            'first_name': 'John',
-            'last_name': 'Doe'
-        })
+        self.user = create_user(
+            email='test@example.com',
+            password='testpass123',
+            first_name='John',
+            last_name='Doe'
+        )
 
-        self.organization = create_organization({
-            'name': 'Test Organization',
-            'domain': 'testorg.com',
-        })
+        self.organization = create_organization(
+            name='Test Organization',
+            domain='testorg.com',
+        )
 
-        self.organization_membership = create_membership({
-            'organization': self.organization,
-            'user': self.user,
-            'role': Membership.ORGANIZATION_OWNER
-        })
+        self.organization_membership = create_membership(
+            organization=self.organization,
+            user=self.user,
+            role=Membership.ROLE_OWNER
+        )
 
-        self.project = create_projects({
-            'name': 'Test Project',
-            'description': 'Test Description',
-            'organization': self.organization
-        })
+        self.project = create_projects(
+            name='Test Project',
+            description='Test Description',
+            organization=self.organization
+        )
 
-        self.project_membership = create_project_membership({
-            'project': self.project,
-            'user': self.user,
-            'role': ProjectMembership.PROJECT_MANAGER
-        })
+        self.project_membership = create_project_membership(
+            project=self.project,
+            user=self.user,
+            role=ProjectMembership.PROJECT_MANAGER
+        )
 
-        self.todo_column = create_column({
-            'project': self.project,
-            'name': 'To Do',
-            'position': 1
-        })
+        self.column = create_column(
+            project=self.project,
+            name='To Do',
+            position=1
+        )
 
-        self.done_column = create_column({
-            'project': self.project,
-            'name': 'Done',
-            'position': 2
-        })
+        self.done_column = create_column(
+            project=self.project,
+            name='Done',
+            position=2
+        )
 
     def test_create_task_successful(self):
         data = {
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.todo_column,
+            'column': self.column,
             'project': self.project,
             'assignee': self.user
         }
@@ -83,7 +83,7 @@ class TaskModelTest(TestCase):
         self.assertEqual(task.title, 'Test Task')
         self.assertEqual(task.description, 'Test Description')
         self.assertEqual(str(task.due_date), '2021-12-12 12:00:00')
-        self.assertEqual(task.columns, self.todo_column)
+        self.assertEqual(task.column, self.column)
         self.assertEqual(task.project, self.project)
         self.assertEqual(task.assignee, self.user)
 
@@ -91,7 +91,7 @@ class TaskModelTest(TestCase):
             'title': 'Test Task 2',
             'description': 'Test Description 2',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.done_column,
+            'column': self.done_column,
             'project': self.project,
             'assignee': self.user
         }
@@ -101,61 +101,61 @@ class TaskModelTest(TestCase):
         self.assertEqual(task2.title, 'Test Task 2')
         self.assertEqual(task2.description, 'Test Description 2')
         self.assertEqual(str(task2.due_date), '2021-12-12 12:00:00')
-        self.assertEqual(task2.columns, self.done_column)
+        self.assertEqual(task2.column, self.done_column)
         self.assertEqual(task2.project, self.project)
         self.assertEqual(task2.assignee, self.user)
 
-    def test_create_task_without_columns(self):
+    def test_create_task_without_column(self):
         with self.assertRaises(IntegrityError):
-            create_task({
-                'title': 'Test Task',
-                'description': 'Test Description',
-                'due_date': '2021-12-12 12:00:00',
-                'project': self.project,
-                'assignee': self.user
-            })
+            create_task(
+                title='Test Task',
+                description='Test Description',
+                due_date='2021-12-12 12:00:00',
+                project=self.project,
+                assignee=self.user
+            )
 
 
 class PublicTaskApiTest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
-        self.user = create_user({
-            'email': 'test@xample.com',
-            'password': 'testpass123',
-            'first_name': 'John',
-            'last_name': 'Doe'
-        })
+        self.user = create_user(
+            email='test@xample.com',
+            password='testpass123',
+            first_name='John',
+            last_name='Doe'
+        )
 
-        self.organization = create_organization({
-            'name': 'Test Organization',
-            'domain': 'testorg.com'
-        })
+        self.organization = create_organization(
+            name='Test Organization',
+            domain='testorg.com'
+        )
 
-        self.organization_membership = create_membership({
-            'organization': self.organization,
-            'user': self.user,
-            'role': Membership.ORGANIZATION_OWNER
-        })
+        self.organization_membership = create_membership(
+            organization=self.organization,
+            user=self.user,
+            role=Membership.ROLE_OWNER
+        )
 
-        self.project = create_projects({
-            'name': 'Test Project',
-            'description': 'Test Description',
-            'organization': self.organization
-        })
+        self.project = create_projects(
+            name='Test Project',
+            description='Test Description',
+            organization=self.organization
+        )
 
-        self.project_membership = create_project_membership({
-            'project': self.project,
-            'user': self.user,
-            'role': ProjectMembership.PROJECT_MANAGER
-        })
+        self.project_membership = create_project_membership(
+            project=self.project,
+            user=self.user,
+            role=ProjectMembership.PROJECT_MANAGER
+        )
 
     def test_list_tasks_unauthenticated(self):
-        column = create_column({
-            'project': self.project,
-            'name': 'To Do',
-            'position': 1
-        })
+        column = create_column(
+            project=self.project,
+            name='To Do',
+            position=1
+        )
 
         res = self.client.get(LIST_CREATE_TASKS_URL, {
             'project_id': self.project.id, 'column_id': column.id})
@@ -163,17 +163,17 @@ class PublicTaskApiTest(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_task_unauthenticated(self):
-        self.column = create_column({
-            'project': self.project,
-            'name': 'To Do',
-            'position': 1
-        })
+        column = create_column(
+            project=self.project,
+            name='To Do',
+            position=1
+        )
 
         res = self.client.post(LIST_CREATE_TASKS_URL, {
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
+            'column': column.id,
             'project': self.project.id,
             'assignee': self.user.id
         })
@@ -183,80 +183,82 @@ class PublicTaskApiTest(TestCase):
 
 class PrivateTaskApiTest(TestCase):
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.manager = APIClient()
+        self.member = APIClient()
+        self.external = APIClient()
 
-        self.user = create_user({
-            'email': 'test@xample.com',
-            'password': 'testpass123',
-            'first_name': 'John',
-            'last_name': 'Doe'
-        })
+        self.user = create_user(
+            email='test@xample.com',
+            password='testpass123',
+            first_name='John',
+            last_name='Doe'
+        )
 
-        self.user_member = create_user({
-            'email': 'test2@example.com',
-            'password': 'testpass123',
-            'first_name': 'Jane',
-            'last_name': 'Doe'
-        })
+        self.user_member = create_user(
+            email='test2@example.com',
+            password='testpass123',
+            first_name='Jane',
+            last_name='Doe'
+        )
 
-        self.user_external = create_user({
-            'email': 'test3@example.com',
-            'password': 'testpass123',
-            'first_name': 'Juan',
-            'last_name': 'Dela Cruz'
-        })
+        self.user_external = create_user(
+            email='test3@example.com',
+            password='testpass123',
+            first_name='Juan',
+            last_name='Dela Cruz'
+        )
 
-        self.organization = create_organization({
-            'name': 'Test Organization',
-            'domain': 'testorg.com'
-        })
+        self.organization = create_organization(
+            name='Test Organization',
+            domain='testorg.com'
+        )
 
-        self.organization2 = create_organization({
-            'name': 'Test Organization 2',
-            'domain': 'testorg2.com'
-        })
+        self.organization2 = create_organization(
+            name='Test Organization 2',
+            domain='testorg2.com'
+        )
 
-        self.organization_membership = create_membership({
-            'organization': self.organization,
-            'user': self.user,
-            'role': Membership.ORGANIZATION_OWNER
-        })
+        self.organization_membership = create_membership(
+            organization=self.organization,
+            user=self.user,
+            role=Membership.ROLE_OWNER
+        )
 
-        self.organization_membership2 = create_membership({
-            'organization': self.organization,
-            'user': self.user_member,
-            'role': Membership.ORGANIZATION_MEMBER
-        })
+        self.organization_membership2 = create_membership(
+            organization=self.organization,
+            user=self.user_member,
+            role=Membership.ROLE_MEMBER
+        )
 
-        self.organization_membership3 = create_membership({
-            'organization': self.organization2,
-            'user': self.user_external,
-            'role': Membership.ORGANIZATION_OWNER
-        })
+        self.organization_membership3 = create_membership(
+            organization=self.organization2,
+            user=self.user_external,
+            role=Membership.ROLE_OWNER
+        )
 
-        self.project = create_projects({
-            'name': 'Test Project',
-            'description': 'Test Description',
-            'organization': self.organization
-        })
+        self.project = create_projects(
+            name='Test Project',
+            description='Test Description',
+            organization=self.organization
+        )
 
-        self.project_membership = create_project_membership({
-            'project': self.project,
-            'user': self.user,
-            'role': ProjectMembership.PROJECT_MANAGER
-        })
+        self.project_membership = create_project_membership(
+            project=self.project,
+            user=self.user,
+            role=ProjectMembership.PROJECT_MANAGER
+        )
 
-        self.project_membership2 = create_project_membership({
-            'project': self.project,
-            'user': self.user_member,
-            'role': ProjectMembership.PROJECT_MEMBER
-        })
+        self.project_membership2 = create_project_membership(
+            project=self.project,
+            user=self.user_member,
+            role=ProjectMembership.PROJECT_MEMBER
+        )
 
-        self.column = create_column({
-            'project': self.project,
-            'name': 'To Do',
-            'position': 1
-        })
+        self.column = create_column(
+            project=self.project,
+            name='To Do',
+            position=1
+        )
 
         self.manager.force_authenticate(user=self.user)
         self.member.force_authenticate(user=self.user_member)
@@ -267,9 +269,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
+            'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.member.id
+            'assignee': self.user_member
         }
 
         self.manager.post(LIST_CREATE_TASKS_URL, data)
@@ -290,9 +292,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
+            'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.member.id
+            'assignee': self.user_member
         }
 
         res = self.external.post(LIST_CREATE_TASKS_URL, data)
@@ -304,12 +306,13 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
+            'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.external.id
+            'assignee': self.user_external.id
         }
 
         res = self.manager.post(LIST_CREATE_TASKS_URL, data)
+        print(res.data)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -318,9 +321,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
-            'project': self.project.id,
-            'assignee': self.member.id
+            'column': self.column,
+            'project': self.project,
+            'assignee': self.user_member
         }
 
         create_task(**data)
@@ -340,20 +343,20 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
-            'project': self.project.id,
-            'assignee': self.member.id
+            'column': self.column,
+            'project': self.project,
+            'assignee': self.user_member
         }
 
         create_task(**data)
 
         res = self.manager.get(LIST_CREATE_TASKS_URL, {
-            'project_id': self.project.id, 'assignee': self.member.id})
+            'project_id': self.project.id, 'assignee': self.user_member})
 
         self.assertEqual(len(res.data), 1)
 
         res = self.member.get(LIST_CREATE_TASKS_URL, {
-            'project_id': self.project.id, 'assignee': self.manager.id})
+            'project_id': self.project.id, 'assignee': self.user.id})
 
         self.assertEqual(len(res.data), 0)
 
@@ -369,9 +372,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
-            'project': self.project.id,
-            'assignee': self.member.id
+            'column': self.column,
+            'project': self.project,
+            'assignee': self.user_member
         }
 
         create_task(**data)
@@ -380,9 +383,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task Updated',
             'description': 'Test Description Updated',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
+            'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.member.id
+            'assignee': self.user_member
         }
 
         res = self.manager.patch(
@@ -396,9 +399,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
-            'project': self.project.id,
-            'assignee': self.member.id
+            'column': self.column,
+            'project': self.project,
+            'assignee': self.user_member
         }
 
         create_task(**data)
@@ -407,9 +410,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task Updated',
             'description': 'Test Description Updated',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
+            'column': self.column.id,
             'project': self.project.id,
-            'assignee': self.member.id
+            'assignee': self.user_member
         }
 
         res = self.external.patch(
@@ -422,9 +425,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
-            'project': self.project.id,
-            'assignee': self.member.id
+            'column': self.column,
+            'project': self.project,
+            'assignee': self.user_member
         }
 
         create_task(**data)
@@ -439,9 +442,9 @@ class PrivateTaskApiTest(TestCase):
             'title': 'Test Task',
             'description': 'Test Description',
             'due_date': '2021-12-12 12:00:00',
-            'columns': self.column.id,
-            'project': self.project.id,
-            'assignee': self.member.id
+            'column': self.column,
+            'project': self.project,
+            'assignee': self.user_member
         }
 
         create_task(**data)

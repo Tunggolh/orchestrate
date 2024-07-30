@@ -113,13 +113,13 @@ class PublicTaskApiTest(TestCase):
 
     def test_list_columns_unauthenticated(self):
         res = self.client.get(LIST_CREATE_COLUMNS_URL, {
-            'project_id': self.project.id})
+            'project': self.project.id})
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_column_unauthenticated(self):
         res = self.client.post(LIST_CREATE_COLUMNS_URL, {
-            'project': self.project,
+            'project': self.project.id,
             'name': 'To Do',
             'position': 1
         })
@@ -206,7 +206,7 @@ class PrivateTaskApiTest(TestCase):
 
     def test_create_column_successful(self):
         data = {
-            'project': self.project,
+            'project': self.project.id,
             'name': 'To Do',
             'position': 1
         }
@@ -228,7 +228,7 @@ class PrivateTaskApiTest(TestCase):
     def test_create_column_unauthorized(self):
         """ Only project managers can create columns """
         data = {
-            'project': self.project,
+            'project': self.project.id,
             'name': 'To Do',
             'position': 1
         }
@@ -248,13 +248,13 @@ class PrivateTaskApiTest(TestCase):
         create_column(**data)
 
         res = self.manager.get(LIST_CREATE_COLUMNS_URL, {
-                               'project_id': self.project.id})
+                               'project': self.project.id})
 
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         res = self.member.get(LIST_CREATE_COLUMNS_URL, {
-            'project_id': self.project.id})
+            'project': self.project.id})
 
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -262,7 +262,7 @@ class PrivateTaskApiTest(TestCase):
     def test_list_columns_unauthorized(self):
         """ Only project members can list columns """
         res = self.external.get(LIST_CREATE_COLUMNS_URL, {
-            'project_id': self.project.id})
+            'project': self.project.id})
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 

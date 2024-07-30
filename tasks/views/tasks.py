@@ -69,9 +69,9 @@ class TaskListCreateView(generics.ListCreateAPIView, ProjectPermissionMixin):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        project_id = serializer.validated_data.get('project', None)
+        project = serializer.validated_data.get('project', None)
         permission_error = self.check_permissions_member(
-            project_id, request.user)
+            project.id, request.user)
 
         if permission_error:
             return permission_error
